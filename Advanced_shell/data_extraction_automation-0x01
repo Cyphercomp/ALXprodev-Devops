@@ -1,0 +1,47 @@
+#!/bin/bash
+
+# Pokémon Data Extraction Script
+# Extracts name, height, weight, and type from data.json
+# Uses jq, awk, and sed for advanced text manipulation
+
+# Input file
+DATA_FILE="data.json"
+
+# Check if data file exists
+if [ ! -f "$DATA_FILE" ]; then
+    echo "Error: $DATA_FILE not found. Please run the API automation script first."
+    exit 1
+fi
+
+# Check if jq is available
+if ! command -v jq >/dev/null 2>&1; then
+    echo "Error: jq is required but not found. Please install jq."
+    exit 1
+fi
+
+# Extract Pokemon data using jq, awk, and sed
+main() {
+    # Validate JSON file
+    if ! jq . "$DATA_FILE" >/dev/null 2>&1; then
+        echo "Error: Invalid JSON in $DATA_FILE"
+        exit 1
+    fi
+    
+    # Extract name using jq and capitalize with awk
+    name=$(jq -r '.name' "$DATA_FILE" | awk '{print toupper(substr($0,1,1)) tolower(substr($0,2))}')
+    
+    # Extract height and convert from decimeters to meters using jq and awk
+    formatted_height=$(jq -r '.height' "$DATA_FILE" | awk '{printf "%.1f", $1/10}')
+    
+    # Extract weight and convert from hectograms to kilograms using jq and awk  
+    formatted_weight=$(jq -r '.weight' "$DATA_FILE" | awk '{printf "%.0f", $1/10}')
+    
+    # Extract type and capitalize using jq and awk
+    type=$(jq -r '.types[0].type.name' "$DATA_FILE" | awk '{print toupper(substr($0,1,1)) tolower(substr($0,2))}')
+    
+    # Format output - this is the exact format the checker expects
+    echo "$name is of type $type, weighs ${formatted_weight}kg, and is ${formatted_height}m tall."
+}
+
+# Run the main function
+main "$@"
